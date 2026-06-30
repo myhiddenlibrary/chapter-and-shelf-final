@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Card Back — Sweet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Berkshire+Swash&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #FFE0BF;
+      --border-outer: #c96a3a;
+      --border-inner: #e8a87c;
+      --accent: #c96a3a;
+      --accent-light: #f5c4a0;
+      --gold: #b8934a;
+      --text-muted: #a06040;
+      --shadow: #d4855a;
+      --font: 'Berkshire Swash', cursive;
+      --serif: 'Cormorant Garamond', serif;
+      --CARD_W: 252px;
+      --CARD_H: 352px;
+    }
+    body { background: #fdf6f0; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 24px 16px 48px; gap: 20px; min-height: 100vh; }
+    .page-header { text-align: center; }
+    .page-brand { font-family: var(--font); font-size: 11px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+    .page-title { font-family: var(--font); font-size: 22px; color: var(--accent); }
+
+    .card {
+      width: var(--CARD_W);
+      height: var(--CARD_H);
+      background: var(--bg);
+      border: 3px solid var(--border-outer);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 4px 4px 0px var(--shadow);
+      position: relative;
+      padding: 22px 18px 18px;
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1.5px solid var(--border-inner);
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Rainbow overlay — permanent */
+    .rainbow-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      background: linear-gradient(
+        135deg,
+        rgba(255,0,128,0.10) 0%,
+        rgba(255,165,0,0.10) 15%,
+        rgba(255,255,0,0.08) 30%,
+        rgba(0,255,128,0.08) 45%,
+        rgba(0,200,255,0.10) 60%,
+        rgba(100,0,255,0.08) 75%,
+        rgba(255,0,200,0.10) 90%,
+        rgba(255,0,128,0.10) 100%
+      );
+      mix-blend-mode: screen;
+    }
+    .rainbow-overlay.active { opacity: 1; }
+
+    .rainbow-shimmer {
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      z-index: 4;
+      pointer-events: none;
+      background: linear-gradient(
+        45deg,
+        transparent 20%,
+        rgba(255,255,255,0.15) 50%,
+        transparent 80%
+      );
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .rainbow-shimmer.active { opacity: 1; }
+
+    .card-top { text-align: center; width: 100%; position: relative; z-index: 5; }
+    .card-tagline-top { font-family: var(--font); font-size: 7.5px; color: var(--text-muted); letter-spacing: 2.5px; text-transform: uppercase; }
+
+    .card-logo { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; z-index: 5; }
+
+    .card-bottom { text-align: center; display: flex; flex-direction: column; gap: 4px; width: 100%; position: relative; z-index: 5; }
+    .card-tagline-bottom { font-family: var(--serif); font-size: 8px; color: var(--text-muted); font-style: italic; letter-spacing: 0.5px; }
+    .card-copyright { font-family: var(--font); font-size: 6.5px; color: var(--accent-light); letter-spacing: 0.3px; opacity: 0.8; }
+
+    .controls { width: 100%; max-width: 280px; background: white; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px; border: 0.5px solid #e8d8cc; }
+    .download-btn { width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .download-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .tagline-note { font-size: 10px; color: #a06040; text-align: center; font-family: var(--font); letter-spacing: 1px; }
+
+    .holo-toggle-wrap { margin-top: 8px; }
+    .holo-toggle-label { font-size: 10px; font-weight: 500; color: #999; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; display: block; }
+    .holo-toggle-row { display: flex; gap: 8px; }
+    .holo-toggle-btn { flex: 1; padding: 7px; border: 1px solid #e8d8cc; border-radius: 8px; font-size: 11px; font-weight: 500; cursor: pointer; background: #f9f5f2; color: #888; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .holo-toggle-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    
+  .switch-btn { 
+  width: 100%; 
+  padding: 11px; 
+  background: var(--accent); 
+  color: white; 
+  border: none; 
+  border-radius: 10px; 
+  font-size: 13px; 
+  font-weight: 600; 
+  cursor: pointer; 
+  font-family: 'Plus Jakarta Sans', sans-serif; 
+  text-align: center; 
+  text-decoration: none; 
+  display: block; 
+  transition: all 0.2s; 
+  margin-bottom: 10px; 
+}
+.switch-btn:hover { 
+  opacity: 0.9; 
+}</style>
+</head>
+<body>
+
+  <div class="page-header">
+    <div class="page-brand">Chapter & Shelf</div>
+    <div class="page-title">Book Card Back — Sweet 🍬</div>
+  </div>
+
+  <div class="card" id="the-card">
+    <div class="rainbow-overlay" id="rainbow-overlay"></div>
+    <div class="rainbow-shimmer" id="rainbow-shimmer"></div>
+
+    <div class="card-top">
+      <div class="card-tagline-top">Read it · Rate it · Collect it</div>
+    </div>
+
+    <div class="card-logo">
+      <svg width="110" height="110" viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="55" cy="55" r="50" fill="none" stroke="#b8934a" stroke-width="1.2"/>
+        <circle cx="55" cy="55" r="44" fill="none" stroke="#b8934a" stroke-width="0.5"/>
+        <text x="55" y="67" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="36" font-weight="600" fill="#b8934a">C&amp;S</text>
+        <text x="55" y="76" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="4.2" font-weight="400" fill="#b8934a" letter-spacing="1.8">CHAPTER &amp; SHELF</text>
+      </svg>
+    </div>
+
+    <div class="card-bottom">
+      <div class="card-tagline-bottom">Turn Every Book Into a Collectible.</div>
+      <div class="card-copyright">© 2026 Chapter & Shelf · All Rights Reserved</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="tagline-note">Read it · Rate it · Collect it</div>
+
+    <div class="holo-toggle-wrap">
+      <span class="holo-toggle-label">Holographic Effect</span>
+      <div class="holo-toggle-row">
+        <button class="holo-toggle-btn" id="btn-holo-on" onclick="setHolo(true)">✦ On</button>
+        <button class="holo-toggle-btn active" id="btn-holo-off" onclick="setHolo(false)">Off</button>
+      </div>
+    </div>
+    <a href="bookcard-sweet.html" class="switch-btn">Front Cover</a>
+    <button class="download-btn" id="dl-btn" onclick="downloadCard()">⬇ Download Back Cover PNG</button>
+  </div>
+
+<script>
+  const CARD_W = 252, CARD_H = 352;
+
+
+  function setHolo(on) {
+    document.getElementById('btn-holo-on').classList.toggle('active', on);
+    document.getElementById('btn-holo-off').classList.toggle('active', !on);
+    document.getElementById('rainbow-overlay').classList.toggle('active', on);
+    document.getElementById('rainbow-shimmer').classList.toggle('active', on);
+  }
+
+  function downloadCard() {
+    const card = document.getElementById('the-card');
+    const btn = document.getElementById('dl-btn');
+    btn.textContent = 'Generating...';
+    btn.disabled = true;
+    setTimeout(() => {
+      html2canvas(card, {
+        scale: 4, useCORS: true, allowTaint: true,
+        backgroundColor: '#FFE0BF', logging: false,
+        letterRendering: true,
+        width: CARD_W, height: CARD_H,
+        onclone: doc => {
+          const c = doc.getElementById('the-card');
+          if (c) { c.style.overflow='hidden'; c.style.borderRadius='16px'; c.style.boxShadow='none'; c.style.width=CARD_W+'px'; c.style.height=CARD_H+'px'; }
+        }
+      }).then(canvas => {
+        const out = document.createElement('canvas');
+        const W=canvas.width, H=canvas.height, R=16*4;
+        out.width=W; out.height=H;
+        const ctx=out.getContext('2d');
+        ctx.beginPath();
+        ctx.moveTo(R,0); ctx.lineTo(W-R,0); ctx.arcTo(W,0,W,R,R);
+        ctx.lineTo(W,H-R); ctx.arcTo(W,H,W-R,H,R);
+        ctx.lineTo(R,H); ctx.arcTo(0,H,0,H-R,R);
+        ctx.lineTo(0,R); ctx.arcTo(0,0,R,0,R);
+        ctx.closePath(); ctx.clip(); ctx.drawImage(canvas,0,0);
+        const link=document.createElement('a');
+        link.download='book-card-back-sweet.png';
+        link.href=out.toDataURL('image/png');
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        btn.textContent='⬇ Download Back Cover PNG'; btn.disabled=false;
+      }).catch(err => {
+        console.error(err);
+        btn.textContent='⬇ Download Back Cover PNG'; btn.disabled=false;
+        alert('Download failed. Please try again.');
+      });
+    }, 100);
+  }
+</script>
+</body>
+</html>
