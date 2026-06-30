@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Card — Frost</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #dce4ec;
+      --border-outer: #5a7a90;
+      --border-inner: #8aaac0;
+      --accent: #1a3048;
+      --accent-light: #b8c8d8;
+      --text: #1a3048;
+      --text-muted: #2a4a62;
+      --banner-bg: #c8d8e8;
+      --shadow: #8aaac0;
+      --font: 'Plus Jakarta Sans', sans-serif;
+    }
+    body { background: #ccd8e4; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 24px 16px 48px; gap: 20px; min-height: 100vh; }
+    .page-header { text-align: center; padding-top: 8px; max-width: 340px; }
+    .page-brand { font-family: var(--font); font-size: 11px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+    .page-title { font-family: var(--font); font-size: 22px; color: var(--accent); margin-bottom: 8px; }
+    .license-notice { font-size: 9px; color: #b0906080; line-height: 1.5; text-align: center; font-style: italic; }
+
+    .card {
+      width: 252px;
+      height: 352px;
+      background: var(--bg);
+      border: 1.5px solid var(--border-outer);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .card::after { content: ''; position: absolute; inset: 4px; border: 0.5px solid var(--border-inner); border-radius: 12px; pointer-events: none; z-index: 10; }
+
+    /* Full background gradient — fixed warm amber, never changes */
+    .full-gradient-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        #f0f0ee 0%,
+        #d8d8d4 20%,
+        #b0b0aa 45%,
+        #888880 70%,
+        #5a5a55 100%
+      );
+      display: none;
+      z-index: 0;
+    }
+    .full-gradient-bg.active { display: block; }
+
+    /* Holographic */
+    .holo-overlay {
+      position: absolute; inset: 0; border-radius: 14px; z-index: 5;
+      pointer-events: none; opacity: 0; transition: opacity 0.3s;
+      background: linear-gradient(135deg,rgba(255,0,128,0.12) 0%,rgba(255,165,0,0.12) 15%,rgba(255,255,0,0.10) 30%,rgba(0,255,128,0.10) 45%,rgba(0,200,255,0.12) 60%,rgba(100,0,255,0.10) 75%,rgba(255,0,200,0.12) 90%,rgba(255,0,128,0.12) 100%);
+      mix-blend-mode: screen;
+    }
+    .holo-overlay.active { opacity: 1; }
+    .holo-shimmer {
+      position: absolute; inset: 0; border-radius: 14px; z-index: 6;
+      pointer-events: none; opacity: 0; transition: opacity 0.3s;
+      background: linear-gradient(45deg,transparent 20%,rgba(255,255,255,0.18) 50%,transparent 80%);
+    }
+    .holo-shimmer.active { opacity: 1; }
+
+    /* Card elements */
+    .card-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px 4px; flex-shrink: 0; position: relative; z-index: 2; }
+    .card-genre { font-family: var(--font); font-size: 10px; color: var(--accent); max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-tier { font-family: var(--font); font-size: 9px; color: var(--accent); white-space: nowrap; font-style: italic; }
+
+    .card-cover {
+      margin: 0 10px; flex: 1; min-height: 0;
+      border-radius: 8px; border: 1.5px solid var(--border-inner);
+      overflow: hidden; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; position: relative; z-index: 2;
+    }
+
+    /* Cover blur — fills entire cover box */
+    .cover-blur {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      filter: blur(8px) brightness(0.9);
+      transform: scale(1.1); display: none; z-index: 1;
+    }
+    .cover-blur.active { display: block; }
+
+    /* Cover image */
+    .card-cover img {
+      display: none; position: relative; z-index: 2;
+    }
+    /* Cover mode: contain — show full cover, blur fills gaps */
+    .card-cover img.mode-cover { height: 100%; width: auto; max-width: 100%; object-fit: contain; }
+    /* Full mode: cover — fill entire box, no gaps */
+    .card-cover img.mode-full { height: 100%; width: 100%; object-fit: cover; }
+
+    .cover-placeholder { font-family: var(--font); font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.6; z-index: 2; position: relative; }
+
+    .card-banner { margin: 4px 10px 0; background: var(--banner-bg); border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-shrink: 0; position: relative; z-index: 2; }
+    .card-title { font-family: var(--font); font-size: 12px; color: var(--text); flex: 1; line-height: 1.2; word-break: break-word; }
+    .card-stars { font-size: 10px; white-space: nowrap; flex-shrink: 0; }
+
+    .card-info { padding: 4px 12px 2px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; position: relative; z-index: 2; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; }
+    .info-label { font-family: var(--font); font-size: 10px; color: var(--text-muted); }
+    .info-value { font-family: var(--font); font-size: 10px; color: var(--text); text-align: right; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .card-divider { margin: 3px 10px; border: none; border-top: 1px solid var(--border-inner); flex-shrink: 0; position: relative; z-index: 2; }
+    .card-quote { padding: 0 12px 4px; font-family: var(--font); font-size: 10px; color: var(--text-muted); text-align: center; font-style: normal; line-height: 1.4; flex-shrink: 0; display: flex; align-items: center; justify-content: center; min-height: 28px; position: relative; z-index: 2; }
+    .card-footer { padding: 4px 12px 6px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--accent-light); flex-shrink: 0; position: relative; z-index: 2; }
+    .card-footer-left { display: flex; flex-direction: column; gap: 1px; }
+    .card-no { font-family: var(--font); font-size: 8px; color: var(--text-muted); letter-spacing: 0.5px; }
+    .card-brand { font-family: var(--font); font-size: 7px; color: var(--accent-light); letter-spacing: 0.3px; opacity: 0.7; }
+    .card-stamp { font-family: var(--font); font-size: 8px; font-weight: 700; color: var(--accent); background: transparent; padding: 4px 9px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1.5px; border: 1.5px solid var(--accent); }
+
+    /* Controls */
+    .controls { width: 100%; max-width: 320px; background: white; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; border: 0.5px solid #d8d8d8; }
+    .controls-title { font-size: 13px; font-weight: 600; color: var(--accent); font-family: var(--font); text-align: center; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 10px; font-weight: 500; color: #999; letter-spacing: 0.5px; text-transform: uppercase; }
+    .field input, .field select { padding: 7px 10px; border: 1px solid #d8d8d8; border-radius: 8px; font-size: 12px; font-family: 'Plus Jakarta Sans', sans-serif; color: #3d2b1f; background: #fafafa; outline: none; width: 100%; }
+    .field input:focus, .field select:focus { border-color: var(--border-outer); }
+    .toggle-row { display: flex; gap: 8px; }
+    .toggle-btn { flex: 1; padding: 7px; border: 1px solid #d8d8d8; border-radius: 8px; font-size: 11px; font-weight: 500; cursor: pointer; background: #f5f5f3; color: #888; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .toggle-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .upload-btn { width: 100%; padding: 9px; background: #f5f5f3; color: var(--accent); border: 1.5px dashed var(--border-inner); border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .download-btn { width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .download-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .tagline { text-align: center; font-family: var(--font); font-size: 10px; color: #7a7a7a; letter-spacing: 1.5px; margin-top: -4px; }
+    .no-toggle { display: flex; gap: 6px; margin-bottom: 6px; }
+    .no-toggle-btn { flex: 1; padding: 5px; border: 1px solid #d8d8d8; border-radius: 6px; font-size: 10px; cursor: pointer; background: #f5f5f3; color: #888; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .no-toggle-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .switch-btn { 
+  width: 100%; 
+  padding: 11px; 
+  background: var(--accent); 
+  color: white; 
+  border: none; 
+  border-radius: 10px; 
+  font-size: 13px; 
+  font-weight: 600; 
+  cursor: pointer; 
+  font-family: 'Plus Jakarta Sans', sans-serif; 
+  text-align: center; 
+  text-decoration: none; 
+  display: block; 
+  transition: all 0.2s; 
+  margin-bottom: 12px; 
+}
+.switch-btn:hover { 
+  opacity: 0.9; 
+}
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <div class="page-brand">Chapter & Shelf</div>
+    <div class="page-title">Book Card Maker — Frost ❄️</div>
+    <div class="license-notice">This Book Card Generator is licensed for personal use only. Redistribution, resale, or commercial use of generated cards is prohibited.</div>
+  </div>
+
+  <div class="card" id="the-card">
+    <div class="full-gradient-bg" id="full-gradient-bg"></div>
+    <div class="holo-overlay" id="holo-overlay"></div>
+    <div class="holo-shimmer" id="holo-shimmer"></div>
+
+    <div class="card-header">
+      <div class="card-genre" id="view-genre">Philosophy</div>
+      <div class="card-tier" id="view-tier">◇ Legendary</div>
+    </div>
+
+    <div class="card-cover" id="cover-slot" onclick="triggerUpload()">
+      <div class="cover-blur" id="cover-blur"></div>
+      <span class="cover-placeholder" id="cover-placeholder">Tap to upload<br>book cover 📖</span>
+      <img id="cover-img" src="#" alt="Book Cover" class="mode-cover">
+    </div>
+
+    <div class="card-banner">
+      <div class="card-title" id="view-title">Meditations</div>
+      <div class="card-stars" id="view-stars">⭐⭐⭐⭐⭐</div>
+    </div>
+
+    <div class="card-info">
+      <div class="info-row"><span class="info-label">Author</span><span class="info-value" id="view-author">Marcus Aurelius</span></div>
+      <div class="info-row"><span class="info-label">Reading Time</span><span class="info-value" id="view-reading-time">7 days</span></div>
+      <div class="info-row"><span class="info-label">Finished</span><span class="info-value" id="view-finished">07/01/2026</span></div>
+      <div class="info-row"><span class="info-label">Format</span><span class="info-value" id="view-format">Physical Book</span></div>
+    </div>
+
+    <hr class="card-divider">
+    <div class="card-quote" id="view-quote">"I declare after all there is no enjoyment like reading!"</div>
+
+    <div class="card-footer">
+      <div class="card-footer-left">
+        <div class="card-no" id="view-no">NO. 2026-0107</div>
+        <div class="card-brand">Design by Chapter & Shelf</div>
+      </div>
+      <div class="card-stamp" id="view-stamp">Favorite</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="controls-title">Fill in your book ✍️</div>
+
+    <input type="file" id="file-input" accept="image/*" style="display:none" onchange="loadCover(event)">
+    <button class="upload-btn" onclick="triggerUpload()">📷 Upload Book Cover</button>
+
+    <div class="field">
+      <label>Blur Mode</label>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="btn-blur-cover" onclick="setBlurMode('cover')">Cover</button>
+        <button class="toggle-btn" id="btn-blur-full" onclick="setBlurMode('full')">Full</button>
+        <button class="toggle-btn" id="btn-blur-off" onclick="setBlurMode('off')">Off</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Holographic Effect</label>
+      <div class="toggle-row">
+        <button class="toggle-btn" id="btn-holo-on" onclick="setHolo(true)">◇ On</button>
+        <button class="toggle-btn active" id="btn-holo-off" onclick="setHolo(false)">Off</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Book Title</label><input type="text" id="in-title" placeholder="e.g. Meditations" oninput="sync()"></div>
+    <div class="field"><label>Author</label><input type="text" id="in-author" placeholder="e.g. Marcus Aurelius" oninput="sync()"></div>
+    <div class="field"><label>Genre</label><input type="text" id="in-genre" placeholder="e.g. Philosophy" oninput="sync()"></div>
+    <div class="field"><label>Reading Time</label><input type="text" id="in-reading-time" placeholder="e.g. 3 days, 2 weeks" oninput="sync()"></div>
+    <div class="field"><label>Finished</label><input type="text" id="in-finished" placeholder="DD/MM/YYYY" oninput="syncFinished()"></div>
+
+    <div class="field">
+      <label>Format</label>
+      <select id="in-format" onchange="sync()">
+        <option value="Physical Book">Physical Book</option>
+        <option value="Ebook">Ebook</option>
+        <option value="Audiobook">Audiobook</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Rating</label>
+      <select id="in-rating" onchange="applyRating()">
+        <option value="" disabled selected>— Select Rating —</option>
+        <option value="5">⭐⭐⭐⭐⭐ — Legendary</option>
+        <option value="4">⭐⭐⭐⭐ — First Edition</option>
+        <option value="3">⭐⭐⭐ — Rare Print</option>
+        <option value="2">⭐⭐ — Common Print</option>
+        <option value="1">⭐ — Remaindered</option>
+        <option value="dnf">❌ DNF — Left the Shelf</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Card Number</label>
+      <div class="no-toggle">
+        <button class="no-toggle-btn active" id="btn-auto-no" onclick="setNoMode('auto')">Auto</button>
+        <button class="no-toggle-btn" id="btn-custom-no" onclick="setNoMode('custom')">Custom</button>
+      </div>
+      <input type="text" id="in-custom-no" placeholder="e.g. BC 001" style="display:none" oninput="syncCustomNo()">
+    </div>
+
+    <div class="field">
+      <label>Footer Style</label>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="btn-quote" onclick="setFooter('quote')">💬 Quote</button>
+        <button class="toggle-btn" id="btn-barcode" onclick="setFooter('barcode')">▌▌▌ Barcode</button>
+      </div>
+    </div>
+
+    <div class="field" id="quote-field">
+      <label>Quote <span style="font-weight:300;text-transform:none;letter-spacing:0;font-size:10px">(auto by rating or write your own)</span></label>
+      <input type="text" id="in-quote" placeholder="Enter a quote..." oninput="onQuoteInput()">
+    </div>
+
+    <a href="bookcard-back-frost-final.html" class="switch-btn">Back Cover</a>
+
+    <button class="download-btn" id="dl-btn" onclick="downloadCard()">⬇ Download PNG</button>
+    <div class="tagline">Read it · Rate it · Collect it</div>
+  </div>
+
+<script>
+  let blurMode = 'cover';
+  let holoOn = false;
+  let footerMode = 'quote';
+  let noMode = 'auto';
+  let quoteIsAuto = false;
+  let coverSrc = null;
+
+  const CARD_W = 252;
+  const CARD_H = 352;
+
+  const TIERS = {
+    '5': { stars:'⭐⭐⭐⭐⭐', tier:'◇ Legendary', quote:'I declare after all there is no enjoyment like reading!', badge:'Favorite' },
+    '4': { stars:'⭐⭐⭐⭐', tier:'◇ First Edition', quote:'Loved it. Would recommend without hesitation.', badge:'Recommended' },
+    '3': { stars:'⭐⭐⭐', tier:'◇ Rare Print', quote:'Enjoyable, but nothing too memorable.', badge:'Worth to Read' },
+    '2': { stars:'⭐⭐', tier:'◇ Common Print', quote:"Had potential, but didn't quite deliver.", badge:'Disappointing' },
+    '1': { stars:'⭐', tier:'◇ Remaindered', quote:"Not my cup of tea. Moving on.", badge:'Not For Me' },
+    'dnf': { stars:'❌', tier:'◇ Left the Shelf', quote:"Life's too short for books I don't enjoy.", badge:'Left the Shelf' }
+  };
+
+  function triggerUpload() { document.getElementById('file-input').click(); }
+
+  function loadCover(e) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      coverSrc = ev.target.result;
+      const img = document.getElementById('cover-img');
+      img.src = coverSrc;
+      img.style.display = 'block';
+      document.getElementById('cover-placeholder').style.display = 'none';
+      applyBlurMode();
+    };
+    reader.readAsDataURL(e.target.files[0]);
+  }
+
+  function applyBlurMode() {
+    const coverBlur = document.getElementById('cover-blur');
+    const gradientBg = document.getElementById('full-gradient-bg');
+    const img = document.getElementById('cover-img');
+
+    // Reset
+    coverBlur.classList.remove('active');
+    gradientBg.classList.remove('active');
+    img.className = 'mode-cover';
+
+    if (!coverSrc) return;
+
+    if (blurMode === 'cover') {
+      // Blur fills gaps beside cover, cover is contained
+      coverBlur.style.backgroundImage = `url(${coverSrc})`;
+      coverBlur.classList.add('active');
+      img.className = 'mode-cover';
+    } else if (blurMode === 'full') {
+      // Fixed amber gradient background, cover fills box + blur behind it
+      gradientBg.classList.add('active');
+      coverBlur.style.backgroundImage = `url(${coverSrc})`;
+      coverBlur.classList.add('active');
+      img.className = 'mode-full'; // cover fills entire box
+    } else {
+      // Off — no blur, cover contained
+      img.className = 'mode-cover';
+    }
+  }
+
+  function setBlurMode(mode) {
+    blurMode = mode;
+    document.getElementById('btn-blur-cover').classList.toggle('active', mode === 'cover');
+    document.getElementById('btn-blur-full').classList.toggle('active', mode === 'full');
+    document.getElementById('btn-blur-off').classList.toggle('active', mode === 'off');
+    applyBlurMode();
+  }
+
+  function setHolo(on) {
+    holoOn = on;
+    document.getElementById('btn-holo-on').classList.toggle('active', on);
+    document.getElementById('btn-holo-off').classList.toggle('active', !on);
+    document.getElementById('holo-overlay').classList.toggle('active', on);
+    document.getElementById('holo-shimmer').classList.toggle('active', on);
+  }
+
+  function sync() {
+    const title = document.getElementById('in-title').value;
+    const titleEl = document.getElementById('view-title');
+    titleEl.textContent = title || 'Meditations';
+    titleEl.style.fontSize = title.length > 35 ? '9px' : title.length > 25 ? '10px' : title.length > 18 ? '11px' : '12px';
+    document.getElementById('view-author').textContent = document.getElementById('in-author').value || 'Marcus Aurelius';
+    document.getElementById('view-genre').textContent = document.getElementById('in-genre').value || 'Philosophy';
+    document.getElementById('view-reading-time').textContent = document.getElementById('in-reading-time').value || '7 days';
+    document.getElementById('view-finished').textContent = document.getElementById('in-finished').value || '07/01/2026';
+    document.getElementById('view-format').textContent = document.getElementById('in-format').value || 'Physical Book';
+    if (footerMode === 'quote') renderQuote();
+    if (footerMode === 'barcode') document.getElementById('view-quote').innerHTML = buildBarcode();
+  }
+
+  function syncFinished() {
+    sync();
+    if (noMode === 'auto') {
+      const f = document.getElementById('in-finished').value;
+      if (f) {
+        const parts = f.split('/');
+        if (parts.length === 3) document.getElementById('view-no').textContent = `NO. ${parts[2]}-${parts[1]}${parts[0]}`;
+      }
+    }
+  }
+
+  function setNoMode(mode) {
+    noMode = mode;
+    document.getElementById('btn-auto-no').classList.toggle('active', mode === 'auto');
+    document.getElementById('btn-custom-no').classList.toggle('active', mode === 'custom');
+    document.getElementById('in-custom-no').style.display = mode === 'custom' ? '' : 'none';
+    if (mode === 'auto') syncFinished();
+  }
+
+  function syncCustomNo() {
+    document.getElementById('view-no').textContent = document.getElementById('in-custom-no').value || 'NO. —';
+  }
+
+  function applyRating() {
+    const r = document.getElementById('in-rating').value;
+    if (!r || !TIERS[r]) return;
+    const d = TIERS[r];
+    document.getElementById('view-stars').textContent = d.stars;
+    document.getElementById('view-tier').textContent = d.tier;
+    document.getElementById('view-stamp').textContent = d.badge;
+    if (footerMode === 'quote' && (quoteIsAuto || !document.getElementById('in-quote').value)) {
+      document.getElementById('in-quote').value = d.quote;
+      quoteIsAuto = true;
+      renderQuote();
+    }
+  }
+
+  function onQuoteInput() { quoteIsAuto = false; renderQuote(); }
+
+  function renderQuote() {
+    const q = document.getElementById('in-quote').value;
+    const el = document.getElementById('view-quote');
+    if (q) {
+      el.textContent = '\u201c' + q + '\u201d';
+      el.style.fontSize = q.length > 80 ? '9px' : q.length > 50 ? '10px' : '12px';
+    } else { el.textContent = ''; }
+  }
+
+  function setFooter(mode) {
+    footerMode = mode;
+    document.getElementById('btn-quote').classList.toggle('active', mode === 'quote');
+    document.getElementById('btn-barcode').classList.toggle('active', mode === 'barcode');
+    document.getElementById('quote-field').style.display = mode === 'quote' ? '' : 'none';
+    const el = document.getElementById('view-quote');
+    if (mode === 'barcode') { el.innerHTML = buildBarcode(); el.style.fontSize = ''; }
+    else renderQuote();
+  }
+
+  function buildBarcode() {
+    const seed = (document.getElementById('in-title').value||'BOOK')+(document.getElementById('in-author').value||'AUTHOR');
+    let hash = 0;
+    for (let i=0;i<seed.length;i++) hash=((hash<<5)-hash+seed.charCodeAt(i))|0;
+    function rand(i){const x=Math.sin(hash+i)*43758.5453123;return x-Math.floor(x);}
+    const W=170,H=24; let bars='',x=0,i=0;
+    while(x<W){const bw=Math.floor(rand(i++)*3)+1,gap=Math.floor(rand(i++)*2)+1;
+      if(rand(i++)>0.32){const h=Math.floor(rand(i)*6)+(H-8),y=Math.floor((H-h)/2);
+        bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="#3a3a3a" opacity="0.4"/>`;}
+      x+=bw+gap;i++;}
+    const abs=Math.abs(hash),code=`${String(abs%1000).padStart(3,'0')}-${String((abs>>4)%10000).padStart(4,'0')}-${String((abs>>8)%100000).padStart(5,'0')}`;
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:100%"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${bars}</svg><span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:7px;color:#7a7a7a;letter-spacing:2px">${code}</span></div>`;
+  }
+
+  function downloadCard() {
+    const card = document.getElementById('the-card');
+    const btn = document.getElementById('dl-btn');
+    btn.textContent = 'Generating...';
+    btn.disabled = true;
+    const origW = card.style.width;
+    const origH = card.style.height;
+    card.style.width = CARD_W + 'px';
+    card.style.height = CARD_H + 'px';
+    setTimeout(() => {
+      html2canvas(card, {
+        letterRendering: true, scale: 4,
+        width: CARD_W, height: CARD_H,
+        useCORS: true, allowTaint: true,
+        backgroundColor: '#f5f5f3', logging: false,
+        onclone: function(clonedDoc) {
+          const c = clonedDoc.getElementById('the-card');
+          if (c) { c.style.width=CARD_W+'px'; c.style.height=CARD_H+'px'; c.style.overflow='hidden'; c.style.borderRadius='16px'; c.style.boxShadow='none'; }
+        }
+      }).then(canvas => {
+        card.style.width = origW; card.style.height = origH;
+        const out = document.createElement('canvas');
+        const W=canvas.width, H=canvas.height, R=16*4;
+        out.width=W; out.height=H;
+        const ctx=out.getContext('2d');
+        ctx.beginPath();
+        ctx.moveTo(R,0); ctx.lineTo(W-R,0); ctx.arcTo(W,0,W,R,R);
+        ctx.lineTo(W,H-R); ctx.arcTo(W,H,W-R,H,R);
+        ctx.lineTo(R,H); ctx.arcTo(0,H,0,H-R,R);
+        ctx.lineTo(0,R); ctx.arcTo(0,0,R,0,R);
+        ctx.closePath(); ctx.clip(); ctx.drawImage(canvas,0,0);
+        const title=(document.getElementById('in-title').value||'book-card').toLowerCase().replace(/\s+/g,'-');
+        const link=document.createElement('a');
+        link.download=`book-card-minimalist-${title}.png`;
+        link.href=out.toDataURL('image/png');
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        btn.textContent='⬇ Download PNG'; btn.disabled=false;
+      }).catch(err => {
+        card.style.width=origW; card.style.height=origH;
+        console.error(err); btn.textContent='⬇ Download PNG'; btn.disabled=false;
+        alert('Download failed. Please try again.');
+      });
+    }, 100);
+  }
+
+  window.onload = () => {
+    const t = new Date();
+    document.getElementById('view-no').textContent = `NO. ${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}`;
+    document.getElementById('in-quote').value = TIERS['5'].quote;
+    quoteIsAuto = true;
+    renderQuote();
+  };
+</script>
+</body>
+</html>
