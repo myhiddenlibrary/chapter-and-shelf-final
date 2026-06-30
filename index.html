@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter & Shelf</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream: #fdf6f0;
+      --gold: #b8934a;
+      --gold-light: #e8d5b0;
+      --dark: #2a1f1a;
+      --muted: #9a8880;
+      --border: #e8d8cc;
+      --card-bg: #fff9f5;
+    }
+    body { background-color: var(--cream); font-family: 'Jost', sans-serif; color: var(--dark); min-height: 100vh; padding: 0 20px 60px; }
+
+    header { text-align: center; padding: 56px 20px 40px; }
+    .brand-label { font-size: 10px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+    .crown-ornament { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
+    .ornament-line { width: 40px; height: 0.5px; background: var(--gold); opacity: 0.6; }
+    .ornament-diamond { width: 5px; height: 5px; background: var(--gold); transform: rotate(45deg); opacity: 0.8; }
+    h1 { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 300; color: var(--dark); line-height: 1.1; margin-bottom: 6px; }
+    h1 em { font-style: italic; color: var(--gold); }
+    .tagline { font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-top: 10px; }
+
+    .section-eyebrow { text-align: center; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .section-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; text-align: center; color: var(--dark); margin-bottom: 32px; }
+
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; max-width: 860px; margin: 0 auto 56px; }
+
+    .tool-card { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 12px; padding: 24px; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.2s, transform 0.15s; position: relative; overflow: hidden; }
+    .tool-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+    .tool-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--gold-light); }
+
+    .card-theme-dot { width: 28px; height: 28px; border-radius: 50%; border: 0.5px solid var(--border); margin-bottom: 4px; }
+    .dot-sweet { background: #fffdeb; border-color: #b54558; }
+    .dot-frost { background: #dce4ec; border-color: #5a7a90; }
+    .dot-blush { background: #fff0f2; border-color: #8c4b55; }
+
+    .card-tool-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--dark); line-height: 1.2; }
+    .card-tool-desc { font-size: 12px; color: var(--muted); line-height: 1.6; flex: 1; }
+    .card-tag { display: inline-block; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; border: 0.5px solid var(--gold-light); color: var(--gold); width: fit-content; }
+    .card-open { font-size: 11px; color: var(--gold); letter-spacing: 0.5px; margin-top: 4px; }
+
+    .lock-indicator { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+
+    .divider { max-width: 860px; margin: 0 auto 40px; display: flex; align-items: center; gap: 16px; }
+    .divider-line { flex: 1; height: 0.5px; background: var(--border); }
+    .divider-text { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+    footer { text-align: center; padding-top: 20px; }
+    .footer-brand { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-style: italic; color: var(--muted); margin-bottom: 6px; }
+    .footer-sub { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--border); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-label">Chapter & Shelf</div>
+    <div class="crown-ornament">
+      <div class="ornament-line"></div>
+      <div class="ornament-diamond"></div>
+      <div class="ornament-line"></div>
+    </div>
+    <h1>Beautiful Digital <em>Tools</em> for Book Lovers</h1>
+    <p class="tagline">Create, collect, and celebrate every book you read</p>
+    <p style="font-size: 14px; color: var(--muted); max-width: 480px; margin: 16px auto 0; line-height: 1.6;">Create beautiful book cards, organize your reading memories, and enjoy thoughtfully designed tools made for readers.</p>
+  </header>
+
+  <div class="section-eyebrow">Featured Tool</div>
+  <div class="section-title">Bookcard Maker</div>
+  <p style="text-align: center; font-size: 13px; color: var(--muted); max-width: 420px; margin: -24px auto 36px; line-height: 1.6;">Design personalized book cards to keep, print, or share with fellow book lovers.</p>
+
+  <div class="cards-grid">
+    <a class="tool-card" href="sweet/">
+      <div class="card-theme-dot dot-sweet"></div>
+      <div class="card-tool-name">Card 1 <br><em style="font-size:15px;color:var(--muted)">Sweet Theme</em></div>
+      <div class="card-tool-desc">Warm pastel colors with a cozy, playful design. Perfect for comfort reads, romance, and feel-good books.</div>
+      <div class="card-tag">Sweet Pastel</div>
+      <div class="lock-indicator">🔒 Password protected</div>
+      <div class="card-open">Open tool →</div>
+    </a>
+
+    <a class="tool-card" href="frost/">
+      <div class="card-theme-dot dot-frost"></div>
+      <div class="card-tool-name">Card 2 <br><em style="font-size:15px;color:var(--muted)">Frost Theme</em></div>
+      <div class="card-tool-desc">Cool steel-blue tones with a clean, editorial layout. Perfect for non-fiction, philosophy, and contemporary reads.</div>
+      <div class="card-tag">Frost</div>
+      <div class="lock-indicator">🔒 Password protected</div>
+      <div class="card-open">Open tool →</div>
+    </a>
+
+    <a class="tool-card" href="blush/">
+      <div class="card-theme-dot dot-blush"></div>
+      <div class="card-tool-name">Card 3 <br><em style="font-size:15px;color:var(--muted)">Blush Theme</em></div>
+      <div class="card-tool-desc">Soft pink tones with a romantic aesthetic. Perfect for emotional reads and beautiful keepsakes.</div>
+      <div class="card-tag">Blush Aesthetic</div>
+      <div class="lock-indicator">🔒 Password protected</div>
+      <div class="card-open">Open tool →</div>
+    </a>
+  </div>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-text">More tools coming soon</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <p style="text-align: center; font-size: 13px; color: var(--muted); max-width: 500px; margin: 56px auto 32px; line-height: 1.6;">We hope Bookcard Maker helps you celebrate every story you read and makes your reading journey even more meaningful.</p>
+  <footer>
+    <div class="footer-brand">Chapter & Shelf</div>
+    <div class="footer-sub">Made with love for the bookish community</div>
+  </footer>
+
+</body>
+</html>
